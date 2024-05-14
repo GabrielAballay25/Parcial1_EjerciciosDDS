@@ -1,0 +1,88 @@
+//Backend-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Esta lineas permite activar el Cors para poder habilitar el compartir informacion con otros sitios en este caso el Frontend
+app.use(cors());
+
+//Permite utilizar a la aplicacion un midleword para recibir y devolver objetos json.
+app.use(express.json());
+
+// Configura la conexión Sequelize (base de datos SQLite en memoria)
+const sequelize = new Sequelize('sqlite::memory:');
+
+//Inicializar la Base de Datos
+async function inicializarBaseDeDatos() { //Define funcion asincrona con async para utilizar await, adentro.
+    await sequelize.sync({ force: true }); //sync sincroniza el modelo de datos con la base de datos. Permite acceder a la base de datos.
+    await Museo.bulkCreate([ //Bulk realiza los insert, en la tabla.
+        //bloque con los datos
+    ]);
+}
+
+//ENDPOINT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//Endpoint para obener datos
+
+//Uso de la ruta Get para completar la recuperacion de datos de la base.
+//En vez de GET, puede ser cualquier verbo
+app.get('/link', async (req, res) => {  // Devuelve todos los registros.
+
+    //app es la variable que representa a express. Cuando haya una peticion get a la url(tal), el codigo se dirige a esta funcion para ejecutar.
+
+    try {
+        const objetos = await Objeto.findAll(); //findAll metodo asincrono que devuelve todos los regisros con todoslos campos de la tabla. Como devuelve promesas utiliza await. 
+        res.json(objetos);
+    } catch (error) {
+        res.status(500).send({ message: 'Error al recuperar los objetos' });
+    }
+});
+
+
+//Endpoint para obtener los objetos con un atributo, ya sea un nombre. 
+
+app.get('/link', async (req, res) => {
+    const nombre = req.query.nombre;
+    let objetos;
+    if (nombre) {
+        objetos = await Objeto.findAll({
+            where: {
+                nombre: {
+                    [Sequelize.Op.like]: `%${nombre}%` //Permite que la consulta solo involucre una parte del nombre,y no sea igual de forma completa.  
+                }
+            }
+        });
+    } else {
+        objetos = await Objetos.findAll(); //En el caso de no encontrar devolver todos.
+    }
+    res.json(objetos);
+});
+
+//Endpoint para agregar un nuevo objeto
+app.post('/link', async (req, res) => {
+    try {
+      const newObjeto = await Objeto.create(req.body);
+      res.status(201).json(newObjeto);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+//Endpoint para eliminar por id
+app.delete('/link/:id', async (req, res) => {
+    try {
+      const deleted = await Objeto.destroy({
+        where: { id: req.params.id }
+      });
+      if (deleted) {
+        res.status(204).send("Objeto eliminado");
+      } else {
+        res.status(404).send('Objeto no encontrado');
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+// Inicia el servidor
+inicializarBaseDeDatos().then(() => {
+    app.listen(3000, () => console.log('Servidor corriendo en http://localhost:3000')); //app.listen permite levantar el servidor en el numero de host que le indiquemos
+});
+
