@@ -1,0 +1,27 @@
+
+//En el caso de tener el archivo BD.SQLITE en nuestra carpeta BACKEND debemos crear la sincronizacion de la Base de Datos de la siguiente manera y
+//luego crear el archivo db-init.js tambien.
+
+// db.js
+import dotenv from "dotenv";
+import { Sequelize } from "sequelize";
+
+dotenv.config();
+
+const logHabilitado = process.env.LOG;
+
+const sequelize = new Sequelize({
+    dialect: "sqlite",
+    logging: (logHabilitado === "true") ? console.log : false,
+    storage: "./data/bd.sqlite"
+});
+
+export default sequelize;
+
+//En el caso de NO TENER el archivo bd.sqlite, instancia de se de datos SQLite abierta en memoria utilizando sequelize de la siguiente manera.
+
+import {Sequelize} from "sequelize"
+
+const sequelize = new Sequelize("sqlite:memory:")
+
+export default sequelize
